@@ -28,6 +28,9 @@
 /* read pressure and temperature every 3 seconds */
 #define isTimeToBaroPresTemp() ((millis() - BaroPresTempTimeMarker) > 3000)
 
+//CK extra timer to update preassure for vario 20x per second)
+#define isTimeToBaro() ((millis() - BaroTimeMarker) > 50)
+
 enum
 {
   BARO_MODULE_NONE,

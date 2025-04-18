@@ -343,3 +343,22 @@ float Adafruit_BMP280::readAltitude(float seaLevelhPa) {
 
   return altitude;
 }
+
+
+//CK: sets the BMP280 settings
+void Adafruit_BMP280::setSampling(sensor_mode mode,
+                                  sensor_sampling tempSampling,
+                                  sensor_sampling pressSampling,
+                                  sensor_filter filter,
+                                  standby_duration duration) {
+    Serial.println("*** setSampling(values) ***");
+    _measReg.mode = mode;
+    _measReg.osrs_t = tempSampling;
+    _measReg.osrs_p = pressSampling;
+  
+    _configReg.filter = filter;
+    _configReg.t_sb = duration;
+  
+    write8(BMP280_REGISTER_CONFIG, _configReg.get());
+    write8(BMP280_REGISTER_CONTROL, _measReg.get());
+  }

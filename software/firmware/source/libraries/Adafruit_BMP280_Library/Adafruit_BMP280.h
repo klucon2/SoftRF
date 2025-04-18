@@ -139,6 +139,82 @@ class Adafruit_BMP280
     float readPressure(void);
     float readAltitude(float seaLevelhPa = 1013.25);
 
+    
+
+
+
+  //CK: enums for BMP280 settings
+  /** Oversampling rate for the sensor. */
+  enum sensor_sampling {
+    /** No over-sampling. */
+    SAMPLING_NONE = 0x00,
+    /** 1x over-sampling. */
+    SAMPLING_X1 = 0x01,
+    /** 2x over-sampling. */
+    SAMPLING_X2 = 0x02,
+    /** 4x over-sampling. */
+    SAMPLING_X4 = 0x03,
+    /** 8x over-sampling. */
+    SAMPLING_X8 = 0x04,
+    /** 16x over-sampling. */
+    SAMPLING_X16 = 0x05
+  };
+
+  /** Filtering level for sensor data. */
+  enum sensor_filter {
+    /** No filtering. */
+    FILTER_OFF = 0x00,
+    /** 2x filtering. */
+    FILTER_X2 = 0x01,
+    /** 4x filtering. */
+    FILTER_X4 = 0x02,
+    /** 8x filtering. */
+    FILTER_X8 = 0x03,
+    /** 16x filtering. */
+    FILTER_X16 = 0x04
+  };
+
+  /** Standby duration in ms */
+  enum standby_duration {
+    /** 1 ms standby. */
+    STANDBY_MS_1 = 0x00,
+    /** 62.5 ms standby. */
+    STANDBY_MS_63 = 0x01,
+    /** 125 ms standby. */
+    STANDBY_MS_125 = 0x02,
+    /** 250 ms standby. */
+    STANDBY_MS_250 = 0x03,
+    /** 500 ms standby. */
+    STANDBY_MS_500 = 0x04,
+    /** 1000 ms standby. */
+    STANDBY_MS_1000 = 0x05,
+    /** 2000 ms standby. */
+    STANDBY_MS_2000 = 0x06,
+    /** 4000 ms standby. */
+    STANDBY_MS_4000 = 0x07
+  };
+
+  /** Operating mode for the sensor. */
+  enum sensor_mode {
+    /** Sleep mode. */
+    MODE_SLEEP = 0x00,
+    /** Forced mode. */
+    MODE_FORCED = 0x01,
+    /** Normal mode. */
+    MODE_NORMAL = 0x03,
+    /** Software reset. */
+    MODE_SOFT_RESET_CODE = 0xB6
+  };
+
+  void setSampling(sensor_mode mode = MODE_NORMAL,
+    sensor_sampling tempSampling = SAMPLING_X1,
+    sensor_sampling pressSampling = SAMPLING_X1,
+    sensor_filter filter = FILTER_OFF,
+    standby_duration duration = STANDBY_MS_1);
+
+
+
+    
   private:
 
     void readCoefficients(void);
@@ -161,6 +237,46 @@ class Adafruit_BMP280
     int8_t _cs, _mosi, _miso, _sck;
 
     bmp280_calib_data _bmp280_calib;
+
+
+    
+
+
+    struct ctrl_meas {
+      /** Initialize to power-on-reset state */
+      ctrl_meas()
+          : osrs_t(SAMPLING_X2), osrs_p(SAMPLING_X1), mode(MODE_NORMAL) {}
+      /** Temperature oversampling. */
+      unsigned int osrs_t : 3;
+      /** Pressure oversampling. */
+      unsigned int osrs_p : 3;
+      /** Device mode */
+      unsigned int mode : 2;
+      /** Used to retrieve the assembled ctrl_meas register's byte value. */
+      unsigned int get() { return (osrs_t << 5) | (osrs_p << 2) | mode; }
+    };
+    
+    struct config {
+      /** Initialize to power-on-reset state */
+      config() : t_sb(STANDBY_MS_1), filter(FILTER_X16), none(0), spi3w_en(0) {}
+      /** Inactive duration (standby time) in normal mode */
+      unsigned int t_sb : 3;
+      /** Filter settings */
+      unsigned int filter : 3;
+      /** Unused - don't set */
+      unsigned int none : 1;
+      /** Enables 3-wire SPI */
+      unsigned int spi3w_en : 1;
+      /** Used to retrieve the assembled config register's byte value. */
+      unsigned int get() { return (t_sb << 5) | (filter << 2) | spi3w_en; }
+    };
+
+
+    //CK: private variables for BMP280 settings
+    ctrl_meas _measReg;
+    config _configReg;
+
+    
 
 };
 

@@ -23,6 +23,10 @@
 #include "Battery.h"
 #include "../protocol/data/NMEA.h"
 
+//CK added for Kalman filter
+#include "KalmanFilter.h"
+#include "math.h"
+
 // including BMP180 & MPL3115A2 still hangs at probe() even with ESP32 Core 2.0.3
 // #define EXCLUDE_BMP280
 #define EXCLUDE_BMP180
@@ -72,6 +76,41 @@ static float prev_pressure_altitude         = 0;
 
 static float Baro_VS[VS_AVERAGING_FACTOR];
 static int avg_ndx = 0;
+
+//################################################
+// CK: added variables for Kalman filter
+//################################################
+
+
+static float kf_pressure                    = 0;
+
+KalmanFilter pressureKFilter01_1(0.1, 1.0, 1.0, 101325.0); // Tuned for BME280
+KalmanFilter pressureKFilter01_5(0.1, 5.0, 1.0, 101325.0); // Tuned for BME280
+KalmanFilter pressureKFilter01_10(0.1, 10.0, 1.0, 101325.0); // Tuned for BME280
+
+KalmanFilter pressureKFilter05_1(0.5, 1.0, 1.0, 101325.0); // Tuned for BME280
+KalmanFilter pressureKFilter05_5(0.5, 5.0, 1.0, 101325.0); // Tuned for BME280
+KalmanFilter pressureKFilter05_10(0.5, 10.0, 1.0, 101325.0); // Tuned for BME280
+
+KalmanFilter pressureKFilter10_1(1.0, 1.0, 1.0, 101325.0); // Tuned for BME280
+KalmanFilter pressureKFilter10_5(1.0, 5.0, 1.0, 101325.0); // Tuned for BME280
+KalmanFilter pressureKFilter10_10(1.0, 10.0, 1.0, 101325.0); // Tuned for BME280
+
+KalmanFilter pressureKFilter01_1double(0.1, 1.0, 1.0, 101325.0); // Tuned for BME280
+
+
+//################################################
+// CK: added variables for Vario
+//################################################
+
+static unsigned long BaroTimeMarker         = 0;
+static float raw_pressure                   = 0;
+
+
+
+
+
+
 
 static float altitude_from_pressure()
 {
@@ -211,6 +250,14 @@ static bool bmp280_probe()
 
 static void bmp280_setup()
 {
+    
+    //CK: sets samling rate for BMP280
+    bmp280.setSampling( Adafruit_BMP280::MODE_NORMAL, 
+    Adafruit_BMP280::SAMPLING_X16, 
+    Adafruit_BMP280::SAMPLING_X4, 
+    Adafruit_BMP280::FILTER_X16, 
+    Adafruit_BMP280::STANDBY_MS_1);
+  
     Serial.print(F("Temperature = "));
     Serial.print(bmp280.readTemperature());
     Serial.println(F(" *C"));
@@ -397,13 +444,15 @@ void Baro_loop()
     ThisAircraft.pressure_altitude = Baro_altitude_cache;
     ThisAircraft.baro_alt_diff = ThisAircraft.altitude - ThisAircraft.pressure_altitude;
 
-#if !defined(EXCLUDE_LK8EX1)
+
+    //CK: moved to separate Vario function "isTimeToBaro""
+    /*#if !defined(EXCLUDE_LK8EX1)
     if ((settings->nmea_s | settings->nmea2_s) & NMEA_S_LK8) {
       snprintf_P(NMEABuffer, sizeof(NMEABuffer), PSTR("$LK8EX1,%d,%.2f,%d,%d,%d*"),
-            (int)Baro_pressure_cache,                                      /* Pascals */
-            Baro_altitude_cache,                                           /* meters */
-            (int) (ThisAircraft.vs * (100 / (_GPS_FEET_PER_METER * 60))),  /* cm/s   */
-            constrain((int) Baro_temperature(), -99, 98),                  /* deg. C */
+            (int)Baro_pressure_cache,                                      // Pascals
+            Baro_altitude_cache,                                           // meters 
+            (int) (ThisAircraft.vs * (100 / (_GPS_FEET_PER_METER * 60))),  // cm/s   
+            constrain((int) Baro_temperature(), -99, 98),                  // deg. C 
             1000+(int)Battery_charge());
             // - LK8000 specs say send percent instead of volts as an integer, percent+1000
       int nmealen = NMEA_add_checksum();
@@ -442,6 +491,134 @@ void Baro_loop()
     Baro_temperature_cache = baro_chip->temperature();
     BaroPresTempTimeMarker = millis();
   }
+
+
+
+  //##########################################
+  // CK: added code for Kalman filtereed pressure
+  //##########################################
+    
+  if (isTimeToBaro()){
+    
+    raw_pressure = bmp280.readPressure();
+    
+    Serial.print(millis());
+    Serial.print("\t");
+    /*Serial.print("RawPressure:");
+    Serial.print(raw_pressure);
+
+    
+
+    float kf_pressure01_1 = pressureKFilter01_1.update(raw_pressure);
+    float kf_pressure01_5 = pressureKFilter01_5.update(raw_pressure);*/
+    float kf_pressure01_10 = pressureKFilter01_10.update(raw_pressure);
+
+    /*float kf_pressure05_1 = pressureKFilter05_1.update(raw_pressure);
+    float kf_pressure05_5 = pressureKFilter05_5.update(raw_pressure);
+    float kf_pressure05_10 = pressureKFilter05_10.update(raw_pressure);
+
+    float kf_pressure10_1 = pressureKFilter10_1.update(raw_pressure);
+    float kf_pressure10_5 = pressureKFilter10_5.update(raw_pressure);
+    float kf_pressure10_10 = pressureKFilter10_10.update(raw_pressure);*/
+
+    float kf_pressure01_10double = pressureKFilter01_1double.update(kf_pressure01_10);
+
+
+
+
+
+
+    
+
+    /*Serial.print("\t");
+    Serial.print("Filtered_pressure:");
+    Serial.print(kf_pressure);
+
+    Serial.print("\t");
+    Serial.print("(int)(round)Filtered_pressure:");
+    Serial.println((int)round(kf_pressure));
+
+    Serial.print("\t");
+    Serial.print("FP01-1:");
+    Serial.print(kf_pressure01_1);
+    //Serial.print("\t");
+    //Serial.print("FP01-5:");
+    //Serial.print(kf_pressure01_5);
+    Serial.print("\t");
+    Serial.print("FP01-10:");
+    Serial.print(kf_pressure01_10);
+
+    //Serial.print("\t");
+    //Serial.print("FP05-1:");
+    //Serial.print(kf_pressure05_1);
+    //Serial.print("\t");
+    //Serial.print("FP05-5:");
+    //Serial.print(kf_pressure05_5);
+    //Serial.print("\t");
+    //Serial.print("FP05-10:");
+    //Serial.print(kf_pressure05_10);
+
+    //Serial.print("\t");
+    //Serial.print("FP10-1:");
+    //Serial.print(kf_pressure10_1);
+    //Serial.print("\t");
+    //Serial.print("FP10-5:");
+    //Serial.print(kf_pressure10_5);
+    //Serial.print("\t");
+    //Serial.print("FP10-10:");
+    //Serial.println(kf_pressure10_10);
+
+
+    Serial.print("\t");
+    Serial.print("RoundFP01-10:");
+    Serial.print((int)round(kf_pressure01_10));
+    //Serial.print("\t");
+    //Serial.print("RoundFP05-1:");
+    //Serial.print((int)round(kf_pressure05_1));
+    Serial.print("\t");
+    Serial.print("RoundFP01-1:");
+    Serial.print((int)round(kf_pressure01_1));
+
+    Serial.print("\t");
+    Serial.print("RoundFP01-10double:");
+    Serial.print((int)round(kf_pressure01_10double));
+
+    Serial.print("\t");
+    Serial.print("MosheBaro:");
+    Serial.println((int)round(Baro_pressure_cache));
+
+    //ThisAircraft.kf_pressure = round(kf_pressure01_10double);*/
+
+    #if !defined(EXCLUDE_LK8EX1)
+    if ((settings->nmea_s | settings->nmea2_s) & NMEA_S_LK8) {
+      snprintf_P(NMEABuffer, sizeof(NMEABuffer), PSTR("$LK8EX1,%d,%.2f,%d,%d,%d*"),
+            (int)round(kf_pressure01_10double),                            /* Pascals */
+            Baro_altitude_cache,                                           /* meters */
+            (int) (ThisAircraft.vs * (100 / (_GPS_FEET_PER_METER * 60))),  /* cm/s   */
+            constrain((int) Baro_temperature(), -99, 98),                  /* deg. C */
+            1000+(int)Battery_charge());
+            // - LK8000 specs say send percent instead of volts as an integer, percent+1000
+      int nmealen = NMEA_add_checksum();
+      NMEA_Source = DEST_NONE;
+      NMEA_Outs(NMEA_S_LK8, NMEABuffer, nmealen, false);
+    }
+    #endif /* EXCLUDE_LK8EX1 */
+
+
+
+
+
+
+
+    
+    BaroTimeMarker = millis();
+
+  }
+
+
+
+
+
 }
 
 float Baro_altitude()
