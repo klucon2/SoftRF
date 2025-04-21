@@ -1,4 +1,24 @@
-# SoftRF
+# SoftRF (CK's version)
+
+
+## Preface
+
+This is a fork of Moshe Braners's SoftRF fork, wich original comes from Linar Yusupov.
+I originally bought the T-Echo to use it as a separate flarm device. Since my current vario (BluFly Vario) has some charging issues, I though to myself why not just use the BMP280 sensor in the T-Echo to get my vario readings and combine it with FlySkyHy, which takes care of the audio part. SoftRF in its standard version by Lyusupov unfortunately does not provide the pressure readings often enough to utilize it as a vario. Moshe's version fixed that a bit, but I still wanted a cleaner and faster reading. So I started on adjusting SoftRF so it would fit my needs. During the course of the adjustments I though to myself why not also use the screen to present some usefull information during the flight. So I also created a new "VarioView". The idea is that in a worst case scenario I can use the T-Echo without a smartphone.
+
+Currently I have implemented teh following changes to Moshe's version:
+
+- adjusted oversampling rate of the BMP280 sensor
+- activated internal IIR Filter of the BMP280 sensor
+- introduced a Kalmanfilter for the sensor's barometic pressure output
+- added a second dampening Kalmanfilter to the barometic pressure to receive an almost constant pressure reading when the system is on the same hight, but still be reactive enough for when the pressure/altitude of the system changes (ergo usable as a vario).
+- added a new "VarioView" dispalying the current altitude [m] at the top, plotting the altitude of the last 100 seconds below in a graph, displaying the current speed over ground [km/h] and showing the wind direction relative to the heading.
+- I deactivated the "Status View" and the "Time View" as these info are not relevant for me, but increase the time to scroll through all the views
+
+<p><img src="https://github.com/klucon2/SoftRF/blob/master/software/firmware/documentation/VarioView.JPG"></p>
+
+------------------------------
+Original text:
 
 DIY, multifunctional, compatible, sub-1 GHz ISM band radio based proximity awareness system for general aviation.
 <br>
