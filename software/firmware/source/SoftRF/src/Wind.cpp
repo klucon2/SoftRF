@@ -32,8 +32,8 @@
 
 float wind_best_ns = 0.0;  /* mps */
 float wind_best_ew = 0.0;
-float wind_speed = 0.0;
-float wind_direction = 0.0;
+extern float wind_speed = 0.0;
+extern float wind_direction = 0.0;
 time_t AirborneTime = 0;
 
 static float avg_abs_turnrate = 0.0;  /* absolute - average when circling */

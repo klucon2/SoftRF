@@ -36,6 +36,14 @@
 #define NAVBOX5_TITLE           "RX"
 #define NAVBOX6_TITLE           "TX"
 
+//CK:added for Vario View
+#define VARIOBOX1_TITLE           "ALT"
+#define VARIOBOX2_TITLE           "LFT"
+#define VARIOBOX3_TITLE           ""
+#define VARIOBOX4_TITLE           ""
+#define VARIOBOX5_TITLE           "SPD"
+#define VARIOBOX6_TITLE           "WND"
+
 #define isTimeToEPD()           (millis() - EPDTimeMarker > 1000)
 #define maxof2(a,b)             (a > b ? a : b)
 
@@ -64,7 +72,8 @@ enum
 
 enum
 {
-	VIEW_MODE_STATUS = 0,
+	VIEW_MODE_VARIO = 0,
+  VIEW_MODE_STATUS,
 	VIEW_MODE_RADAR,
 	VIEW_MODE_TEXT,
 	VIEW_MODE_BARO,
@@ -227,6 +236,11 @@ void EPD_Up();
 void EPD_Down();
 void EPD_Message(const char *, const char *);
 
+void EPD_vario_setup();
+void EPD_vario_loop();
+void EPD_vario_next();
+void EPD_vario_prev();
+
 void EPD_status_setup();
 void EPD_status_loop();
 void EPD_status_next();
@@ -267,6 +281,10 @@ void EPD_time_setup();
 void EPD_time_loop();
 void EPD_time_next();
 void EPD_time_prev();
+
+void updateAltitudeHistory(int32_t altitude);
+void drawAltitudeGraph();
+void drawWindArrow(uint16_t centerX, uint16_t centerY, uint16_t length, float angleDegrees);
 
 #if defined(USE_EPAPER)
 EPD_Task_t EPD_Task(void *);

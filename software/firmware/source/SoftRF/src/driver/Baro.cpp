@@ -502,8 +502,8 @@ void Baro_loop()
     
     raw_pressure = bmp280.readPressure();
     
-    Serial.print(millis());
-    Serial.print("\t");
+    //Serial.print(millis());
+    //Serial.print("\t");
     /*Serial.print("RawPressure:");
     Serial.print(raw_pressure);
 

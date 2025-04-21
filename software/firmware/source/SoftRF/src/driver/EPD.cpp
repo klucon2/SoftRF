@@ -35,11 +35,13 @@
 #include <Fonts/FreeMonoBold12pt7b.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
 #include <Fonts/FreeMono18pt7b.h>
+#include <Fonts/FreeMono9pt7b.h>
 
 #include <Fonts/Org_01.h>
 #include <Fonts/FreeMonoBoldOblique9pt7b.h>
 #include <Fonts/FreeSerif9pt7b.h>
 
+const char EPD_SoftRF_text0[] = "CK's version of";
 const char EPD_SoftRF_text1[] = "SoftRF";
 const char EPD_SoftRF_text2[] =  "and"  ;
 const char EPD_SoftRF_text3[] = "LilyGO";
@@ -96,11 +98,12 @@ static bool screen_off = false;
 int EPD_view_mode = 0;
 int EPD_prev_view = 0;
 bool EPD_vmode_updated = true;
-uint16_t EPD_pages_mask = (1 << VIEW_MODE_STATUS) |
+uint16_t EPD_pages_mask = (1 << VIEW_MODE_VARIO)  |
+                          /*(1 << VIEW_MODE_STATUS) |*/
                           (1 << VIEW_MODE_RADAR ) |
                           (1 << VIEW_MODE_TEXT  ) |
-                          (1 << VIEW_MODE_CONF  ) |
-                          (1 << VIEW_MODE_TIME  );
+                          (1 << VIEW_MODE_CONF  ) /*|
+                          (1 << VIEW_MODE_TIME  )*/;
 
 volatile uint8_t EPD_update_in_progress = EPD_UPDATE_NONE;
 
@@ -124,6 +127,9 @@ bool EPD_setup(bool splash_screen)
   display->setTextColor(GxEPD_BLACK);
   display->setTextWrap(false);
 
+  
+  
+  
   display->setFont(&FreeMonoBold24pt7b);
   display->getTextBounds(EPD_SoftRF_text1, 0, 0, &tbx1, &tby1, &tbw1, &tbh1);
   display->getTextBounds(EPD_SoftRF_text3, 0, 0, &tbx3, &tby3, &tbw3, &tbh3);
@@ -132,8 +138,18 @@ bool EPD_setup(bool splash_screen)
 
   display->fillScreen(GxEPD_WHITE);
 
+  display->setFont(&FreeMono9pt7b);
+  x = (display->width()  - tbw1) / 2;
+  y = 30 ;
+  display->setCursor(x, y);
+  display->print(EPD_SoftRF_text0);
+
+  display->setFont(&FreeMonoBold24pt7b);
+
   if (hw_info.model == SOFTRF_MODEL_BADGE) {
 
+    
+    
     x = (display->width()  - tbw1) / 2;
     y = (display->height() + tbh1) / 2 - tbh3;
     display->setCursor(x, y);
@@ -184,6 +200,7 @@ bool EPD_setup(bool splash_screen)
 
   rval = display->probe();
 
+  EPD_vario_setup();
   EPD_status_setup();
   EPD_radar_setup();
   EPD_text_setup();
@@ -523,6 +540,10 @@ void EPD_loop()
 //    default:
         EPD_status_loop();
         break;
+      case VIEW_MODE_VARIO:
+//    default:
+        EPD_vario_loop();
+        break;
       }
 
       EPD_prev_view = EPD_view_mode;
@@ -726,6 +747,10 @@ void EPD_Up()
 //    default:
       EPD_status_next();
       break;
+    case VIEW_MODE_VARIO:
+      //    default:
+      EPD_vario_next();
+      break;
     }
   }
 }
@@ -761,6 +786,10 @@ void EPD_Down()
     case VIEW_MODE_STATUS:
 //    default:
       EPD_status_prev();
+      break;
+    case VIEW_MODE_VARIO:
+      //    default:
+      EPD_vario_prev();
       break;
     }
   }
