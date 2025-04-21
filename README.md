@@ -15,6 +15,10 @@ Currently I have implemented teh following changes to Moshe's version:
 - added a new "VarioView" dispalying the current altitude [m] at the top, plotting the altitude of the last 100 seconds below in a graph, displaying the current speed over ground [km/h] and showing the wind direction relative to the heading.
 - I deactivated the "Status View" and the "Time View" as these info are not relevant for me, but increase the time to scroll through all the views
 
+If you want to compile the firware for yourself, you need to download the Arduino IDE and install the Adafruit nRF52 Board in v1.5.0. If you use a newer version, you will receive an error.
+
+Unfortunately I havent quite figuerd out yet how to ceate the UF2 files. If somebody can giv me a tip, I'd be very happy :-) .
+
 <p><img src="https://github.com/klucon2/SoftRF/blob/master/software/firmware/documentation/VarioView.JPG"></p>
 
 ------------------------------
